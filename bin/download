@@ -5,18 +5,30 @@ set -euo pipefail
 current_script_path=${BASH_SOURCE[0]}
 plugin_dir=$(dirname "$(dirname "$current_script_path")")
 
-# shellcheck source=../lib/utils.bash
+# shellcheck source=./lib/utils.bash
 source "${plugin_dir}/lib/utils.bash"
 
 mkdir -p "$ASDF_DOWNLOAD_PATH"
 
-release_file="$ASDF_DOWNLOAD_PATH/$TOOL_NAME-$ASDF_INSTALL_VERSION.zip"
+release_file_base="$ASDF_DOWNLOAD_PATH/$TOOL_NAME-$ASDF_INSTALL_VERSION"
 
-# Download zip file to the download directory
-download_release "$ASDF_INSTALL_VERSION" "$release_file"
+# Download release archive (sets RELEASE_EXT to tar.gz or zip)
+download_release "$ASDF_INSTALL_VERSION" "$release_file_base"
 
-#  Extract contents of zip file into the download directory
-unzip "$release_file" -d "$ASDF_DOWNLOAD_PATH" || fail "Could not extract $release_file"
+release_file="$release_file_base.$RELEASE_EXT"
 
-# Remove the zip file since we don't need to keep it
+# Extract contents based on archive type
+if [[ "$RELEASE_EXT" == "tar.gz" ]]; then
+	# Architecture-specific tar.gz has nested structure: xcodes/VERSION/bin/xcodes
+	tar -xzf "$release_file" -C "$ASDF_DOWNLOAD_PATH" || fail "Could not extract $release_file"
+	# Move binary from nested structure to download path root
+	mv "$ASDF_DOWNLOAD_PATH/$TOOL_NAME/$ASDF_INSTALL_VERSION/bin/$TOOL_NAME" "$ASDF_DOWNLOAD_PATH/$TOOL_NAME.bin"
+	rm -rf "${ASDF_DOWNLOAD_PATH:?}/${TOOL_NAME:?}"
+	mv "$ASDF_DOWNLOAD_PATH/$TOOL_NAME.bin" "$ASDF_DOWNLOAD_PATH/$TOOL_NAME"
+else
+	# Universal zip has flat structure: xcodes at root
+	unzip -q "$release_file" -d "$ASDF_DOWNLOAD_PATH" || fail "Could not extract $release_file"
+fi
+
+# Remove the archive since we don't need to keep it
 rm "$release_file"

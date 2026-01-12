@@ -1,0 +1,28 @@
+name: mise
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  schedule:
+    - cron: 0 0 * * 5
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  test:
+    name: mise test
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Mise
+        uses: jdx/mise-action@v3
+        with:
+          install: false
+
+      - run: mise exec asdf:https://github.com/younke/asdf-xcodes@latest -- xcodes --help

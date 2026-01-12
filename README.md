@@ -1,9 +1,12 @@
 <div align="center">
 
-# asdf-xcodes [![Build](https://github.com/younke/asdf-xcodes/actions/workflows/build.yml/badge.svg)](https://github.com/younke/asdf-xcodes/actions/workflows/build.yml) [![Lint](https://github.com/younke/asdf-xcodes/actions/workflows/lint.yml/badge.svg)](https://github.com/younke/asdf-xcodes/actions/workflows/lint.yml)
+# asdf-xcodes
 
+[![Build](https://github.com/younke/asdf-xcodes/actions/workflows/build.yml/badge.svg)](https://github.com/younke/asdf-xcodes/actions/workflows/build.yml)
+[![Lint](https://github.com/younke/asdf-xcodes/actions/workflows/lint.yml/badge.svg)](https://github.com/younke/asdf-xcodes/actions/workflows/lint.yml)
+[![Mise](https://github.com/younke/asdf-xcodes/actions/workflows/test-mise.yml/badge.svg)](https://github.com/younke/asdf-xcodes/actions/workflows/test-mise.yml)
 
-[xcodes](https://github.com/RobotsAndPencils/xcodes) plugin for the [asdf version manager](https://asdf-vm.com).
+[xcodes](https://github.com/XcodesOrg/xcodes) plugin for the [asdf version manager](https://asdf-vm.com).
 
 </div>
 
