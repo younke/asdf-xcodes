@@ -42,13 +42,23 @@ list_all_versions() {
 	list_github_tags
 }
 
-get_arch_url() {
+# Versions without a pre-release suffix, e.g. 2.0.3 but not 2.0.0b1.
+list_stable_versions() {
+	list_all_versions | grep -v '^0\.' | grep -v '[[:alpha:]]'
+}
+
+# Architecture specific archives. Releases up to 2.0.1 are named
+# `xcodes-<version>.macos.<arch>.tar.gz`, from 2.0.2 on they carry the Homebrew
+# `.bottle` infix. Both layouts are otherwise identical.
+list_arch_urls() {
 	local version="$1"
 	local arch
 	arch=$(get_arch)
+	echo "$GH_REPO/releases/download/${version}/${TOOL_NAME}-${version}.macos.${arch}.bottle.tar.gz"
 	echo "$GH_REPO/releases/download/${version}/${TOOL_NAME}-${version}.macos.${arch}.tar.gz"
 }
 
+# Universal binary archive, published for every release.
 get_zip_url() {
 	local version="$1"
 	echo "$GH_REPO/releases/download/${version}/${TOOL_NAME}.zip"
@@ -65,20 +75,21 @@ url_exists() {
 download_release() {
 	local version="$1"
 	local filename_base="$2"
-	local arch_url zip_url
-
-	arch_url=$(get_arch_url "$version")
-	zip_url=$(get_zip_url "$version")
+	local url
 
 	echo "* Downloading $TOOL_NAME release $version..."
 
-	if url_exists "$arch_url"; then
-		RELEASE_EXT="tar.gz"
-		curl "${curl_opts[@]}" -o "${filename_base}.tar.gz" "$arch_url" || fail "Could not download $arch_url"
-	else
-		RELEASE_EXT="zip"
-		curl "${curl_opts[@]}" -o "${filename_base}.zip" "$zip_url" || fail "Could not download $zip_url"
-	fi
+	while read -r url; do
+		if url_exists "$url"; then
+			RELEASE_EXT="tar.gz"
+			curl "${curl_opts[@]}" -o "${filename_base}.tar.gz" "$url" || fail "Could not download $url"
+			return
+		fi
+	done < <(list_arch_urls "$version")
+
+	url=$(get_zip_url "$version")
+	RELEASE_EXT="zip"
+	curl "${curl_opts[@]}" -o "${filename_base}.zip" "$url" || fail "Could not download $url"
 }
 
 install_version() {

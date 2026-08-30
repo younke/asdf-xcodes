@@ -19,16 +19,24 @@ release_file="$release_file_base.$RELEASE_EXT"
 
 # Extract contents based on archive type
 if [[ "$RELEASE_EXT" == "tar.gz" ]]; then
-	# Architecture-specific tar.gz has nested structure: xcodes/VERSION/bin/xcodes
-	tar -xzf "$release_file" -C "$ASDF_DOWNLOAD_PATH" || fail "Could not extract $release_file"
-	# Move binary from nested structure to download path root
-	mv "$ASDF_DOWNLOAD_PATH/$TOOL_NAME/$ASDF_INSTALL_VERSION/bin/$TOOL_NAME" "$ASDF_DOWNLOAD_PATH/$TOOL_NAME.bin"
-	rm -rf "${ASDF_DOWNLOAD_PATH:?}/${TOOL_NAME:?}"
-	mv "$ASDF_DOWNLOAD_PATH/$TOOL_NAME.bin" "$ASDF_DOWNLOAD_PATH/$TOOL_NAME"
+	# Architecture-specific archives are Homebrew bottles, which nest the binary
+	# as <tool>/<version>/bin/<tool>. Extract aside, then flatten.
+	extract_path="$ASDF_DOWNLOAD_PATH/.extract"
+	mkdir -p "$extract_path"
+	tar -xzf "$release_file" -C "$extract_path" || fail "Could not extract $release_file"
+
+	tool_path=$(find "$extract_path" -type f -name "$TOOL_NAME" | head -n 1)
+	[ -n "$tool_path" ] || fail "Could not find $TOOL_NAME in $release_file"
+
+	mv "$tool_path" "$ASDF_DOWNLOAD_PATH/$TOOL_NAME"
+	rm -rf "$extract_path"
 else
 	# Universal zip has flat structure: xcodes at root
 	unzip -q "$release_file" -d "$ASDF_DOWNLOAD_PATH" || fail "Could not extract $release_file"
 fi
+
+[ -f "$ASDF_DOWNLOAD_PATH/$TOOL_NAME" ] || fail "Expected $TOOL_NAME in $release_file"
+chmod +x "$ASDF_DOWNLOAD_PATH/$TOOL_NAME"
 
 # Remove the archive since we don't need to keep it
 rm "$release_file"
